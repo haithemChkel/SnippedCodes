@@ -68,7 +68,7 @@ foreach ($port in $ports) {
 
         # Output the target and labels
         [PSCustomObject]@{
-            targets = "localhost:$($result.Port)"
+            targets = @("localhost:$($result.Port)")
             labels = @{
                 job = "node"
             }
