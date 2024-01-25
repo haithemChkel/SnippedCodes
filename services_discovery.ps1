@@ -1,5 +1,5 @@
-# Set the process name variable
-$processName = "Etl.Service.Rafale"
+# Set the output JSON file path
+$jsonFilePath = "result.json"
 
 # Function to log messages
 function LogMessage {
@@ -82,14 +82,13 @@ foreach ($port in $ports) {
 LogMessage "Waiting for all jobs to complete..."
 Wait-Job -Job $jobResults | Out-Null
 
-# Receive job results
-$receivedJobResults = Receive-Job -Job $jobResults
+# Receive job results and remove unwanted properties
+$receivedJobResults = Receive-Job -Job $jobResults | ForEach-Object { $_ | Select-Object -Property targets, labels }
 
 # Generate JSON file content
 $jsonContent = $receivedJobResults | ConvertTo-Json
 
 # Write JSON content to a file
-$jsonFilePath = "result.json"
 $jsonContent | Set-Content -Path $jsonFilePath
 
 LogMessage "JSON file created: $jsonFilePath"
