@@ -1,5 +1,7 @@
-# Set the output JSON file path
-$jsonFilePath = "result.json"
+param(
+    [string]$processName,
+    [string]$jsonFilePath
+)
 
 # Function to log messages
 function LogMessage {
@@ -95,3 +97,7 @@ LogMessage "JSON file created: $jsonFilePath"
 
 # Cleanup jobs
 Remove-Job -Job $jobResults
+
+
+# sample
+# .\YourScript.ps1 -processName "Etl.Service.Rafale" -jsonFilePath "result.json"
