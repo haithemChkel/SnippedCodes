@@ -6,28 +6,43 @@ $results = @()
 
 # Iterate through each service
 foreach ($service in $services) {
-    # Extract env and shortname from the service name
+    # Extract env and shortname from the service name using the separator "."
     $serviceName = $service.DisplayName
-    $env, $shortname = $serviceName -split '\.DEV\.'
+    Write-Host "Processing service: $serviceName"
 
-    # Get the process ID (targetProcessID) for the service
-    $targetProcessID = Get-WmiObject Win32_Service | Where-Object { $_.DisplayName -eq $serviceName } | Select-Object -ExpandProperty ProcessId
+    $nameParts = $serviceName -split '\.'
 
-    # Get TCP connections associated with the specified process ID
-    $tcpConnections = Get-NetTCPConnection | Where-Object { $_.OwningProcess -eq $targetProcessID }
+    # Ensure that there are at least three parts in the name
+    if ($nameParts.Count -ge 3) {
+        $env = $nameParts[1]
+        $shortname = ($nameParts[2..$($nameParts.Count - 1)]) -join '.'
+        Write-Host "Extracted env: $env, shortname: $shortname"
 
-    # Extract the port from the TCP connections
-    $port = $tcpConnections.LocalPort | Select-Object -Unique
+        # Get the process ID (targetProcessID) for the service
+        $targetProcessID = Get-WmiObject Win32_Service | Where-Object { $_.DisplayName -eq $serviceName } | Select-Object -ExpandProperty ProcessId
+        Write-Host "Target process ID: $targetProcessID"
 
-    # Create a hashtable with the extracted information
-    $result = @{
-        'env'       = $env
-        'shortname' = $shortname
-        'port'      = $port
+        # Get TCP connections associated with the specified process ID
+        $tcpConnections = Get-NetTCPConnection | Where-Object { $_.OwningProcess -eq $targetProcessID }
+        Write-Host "Found $($tcpConnections.Count) TCP connections for process ID: $targetProcessID"
+
+        # Extract the port from the TCP connections
+        $port = $tcpConnections.LocalPort | Select-Object -Unique
+        Write-Host "Extracted port: $port"
+
+        # Create a hashtable with the extracted information
+        $result = @{
+            'env'       = $env
+            'shortname' = $shortname
+            'port'      = $port
+        }
+
+        # Add the hashtable to the results array
+        $results += New-Object PSObject -Property $result
     }
-
-    # Add the hashtable to the results array
-    $results += New-Object PSObject -Property $result
+    else {
+        Write-Host "Skipping service $serviceName. It does not have at least three parts in its name."
+    }
 }
 
 # Display the results in a table
