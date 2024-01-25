@@ -8,27 +8,6 @@ function LogMessage {
     Write-Host "$timestamp - $message"
 }
 
-# Function to check the HTTP status code
-function CheckHttpStatusCode {
-    param($url, $port)
-    try {
-        $response = Invoke-WebRequest -Uri $url -Method Head -ErrorAction Stop
-        $statusCode = $response.StatusCode
-        LogMessage "Port $port - HTTP Status Code: $statusCode"
-        return [PSCustomObject]@{
-            Port = $port
-            StatusCode = $statusCode
-        }
-    } catch {
-        $statusCode = $_.Exception.Response.StatusCode.Value__
-        LogMessage "Port $port - Error: $_"
-        return [PSCustomObject]@{
-            Port = $port
-            StatusCode = $statusCode
-        }
-    }
-}
-
 # Get processes with the specified name
 $matchingProcesses = Get-Process -Name $processName
 
@@ -55,7 +34,41 @@ foreach ($port in $ports) {
     LogMessage "Starting job for Port $port"
     $job = Start-Job -ScriptBlock {
         param($url, $port)
-        CheckHttpStatusCode -url $url -port $port
+
+        # Function to log messages
+        function LogMessage {
+            param($message)
+            $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+            Write-Host "$timestamp - $message"
+        }
+
+        # Function to check the HTTP status code
+        function CheckHttpStatusCode {
+            param($url, $port)
+            try {
+                $response = Invoke-WebRequest -Uri $url -Method Head -ErrorAction Stop
+                $statusCode = $response.StatusCode
+                LogMessage "Port $port - HTTP Status Code: $statusCode"
+                return [PSCustomObject]@{
+                    Port = $port
+                    StatusCode = $statusCode
+                }
+            } catch {
+                $statusCode = $_.Exception.Response.StatusCode.Value__
+                LogMessage "Port $port - Error: $_"
+                return [PSCustomObject]@{
+                    Port = $port
+                    StatusCode = $statusCode
+                }
+            }
+        }
+
+        # Call the function within the job script block
+        $result = CheckHttpStatusCode -url $url -port $port
+
+        # Output the port and status code
+        $result | Select-Object -Property Port, StatusCode
+
     } -ArgumentList $url, $port
     $jobResults += $job
 }
