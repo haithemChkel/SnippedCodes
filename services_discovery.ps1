@@ -8,6 +8,27 @@ function LogMessage {
     Write-Host "$timestamp - $message"
 }
 
+# Function to check the HTTP status code
+function CheckHttpStatusCode {
+    param($url, $port)
+    try {
+        $response = Invoke-WebRequest -Uri $url -Method Head -ErrorAction Stop
+        $statusCode = $response.StatusCode
+        LogMessage "Port $port - HTTP Status Code: $statusCode"
+        return [PSCustomObject]@{
+            Port = $port
+            StatusCode = $statusCode
+        }
+    } catch {
+        $statusCode = $_.Exception.Response.StatusCode.Value__
+        LogMessage "Port $port - Error: $_"
+        return [PSCustomObject]@{
+            Port = $port
+            StatusCode = $statusCode
+        }
+    }
+}
+
 # Get processes with the specified name
 $matchingProcesses = Get-Process -Name $processName
 
@@ -46,9 +67,22 @@ Wait-Job -Job $jobResults | Out-Null
 # Receive job results
 $receivedJobResults = Receive-Job -Job $jobResults
 
-# Display the list of ports with HTTP status code 200 in 'Listen' state for the specified process
+# Filter job results for ports with HTTP status code 200
 $portsWithStatusCode200 = $receivedJobResults | Where-Object { $_.StatusCode -eq 200 } | Select-Object Port
-LogMessage "Ports with HTTP status code 200 in 'Listen' state for processes with name '$processName': $portsWithStatusCode200"
+
+# Generate JSON file content
+$jsonContent = @{
+    labels = @{
+        job = "node"
+    }
+    targets = $portsWithStatusCode200 | ForEach-Object { "localhost:$_" }
+} | ConvertTo-Json
+
+# Write JSON content to a file
+$jsonFilePath = "result.json"
+$jsonContent | Set-Content -Path $jsonFilePath
+
+LogMessage "JSON file created: $jsonFilePath"
 
 # Cleanup jobs
 Remove-Job -Job $jobResults
