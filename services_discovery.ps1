@@ -12,10 +12,15 @@ foreach ($service in $services) {
 
     # Use Get-WmiObject to get the actual process ID (PID) for the service
     $serviceInfo = Get-WmiObject Win32_Service | Where-Object { $_.DisplayName -eq $serviceName }
-    
+
     if ($serviceInfo) {
         $targetProcessID = $serviceInfo.ProcessId
         Write-Host "Target process ID: $targetProcessID"
+
+        # Get the hosting svchost.exe process for the service
+        $hostingSvchost = Get-Process -Id $targetProcessID | Select-Object -ExpandProperty Path
+
+        Write-Host "Hosting svchost.exe process: $hostingSvchost"
 
         # Get TCP connections associated with the specified process ID
         $tcpConnections = Get-NetTCPConnection | Where-Object { $_.OwningProcess -eq $targetProcessID }
@@ -30,6 +35,7 @@ foreach ($service in $services) {
             'env'       = $serviceInfo.DisplayName.Split(".")[1]
             'shortname' = ($serviceInfo.DisplayName.Split(".")[2..$($serviceInfo.DisplayName.Split(".").Count - 1)]) -join '.'
             'port'      = $port
+            'svchost'   = $hostingSvchost
         }
 
         # Add the hashtable to the results array
