@@ -66,8 +66,13 @@ foreach ($port in $ports) {
         # Call the function within the job script block
         $result = CheckHttpStatusCode -url $url -port $port
 
-        # Output the port and status code
-        $result | Select-Object -Property Port, StatusCode
+        # Output the target and labels
+        [PSCustomObject]@{
+            targets = "localhost:$($result.Port)"
+            labels = @{
+                job = "node"
+            }
+        }
 
     } -ArgumentList $url, $port
     $jobResults += $job
@@ -80,16 +85,8 @@ Wait-Job -Job $jobResults | Out-Null
 # Receive job results
 $receivedJobResults = Receive-Job -Job $jobResults
 
-# Filter job results for ports with HTTP status code 200
-$portsWithStatusCode200 = $receivedJobResults | Where-Object { $_.StatusCode -eq 200 } | Select-Object Port
-
 # Generate JSON file content
-$jsonContent = @{
-    labels = @{
-        job = "node"
-    }
-    targets = $portsWithStatusCode200 | ForEach-Object { "localhost:$_" }
-} | ConvertTo-Json
+$jsonContent = $receivedJobResults | ConvertTo-Json
 
 # Write JSON content to a file
 $jsonFilePath = "result.json"
