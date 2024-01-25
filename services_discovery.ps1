@@ -1,18 +1,34 @@
-# Get all services with names starting with "Thor."
+# Get all Windows services that start with "Thor."
 $services = Get-Service | Where-Object { $_.DisplayName -like "Thor.*" }
 
-# Iterate through each matching service
+# Create an array to store the results
+$results = @()
+
+# Iterate through each service
 foreach ($service in $services) {
-    # Get service dependencies
-    $serviceDependencies = Get-Service $service.ServiceName | Select-Object -ExpandProperty Dependencies
+    # Extract env and shortname from the service name
+    $serviceName = $service.DisplayName
+    $env, $shortname = $serviceName -split '\.DEV\.'
 
-    # Extract port information from service dependencies
-    $port = $serviceDependencies -match ':\d+' | ForEach-Object { $_ -replace '.*:(\d+)', '$1' }
+    # Get the process ID (targetProcessID) for the service
+    $targetProcessID = Get-WmiObject Win32_Service | Where-Object { $_.DisplayName -eq $serviceName } | Select-Object -ExpandProperty ProcessId
 
-    # Display service name and port if port information is found
-    if ($port) {
-        Write-Host "Service Name: $($service.DisplayName), Port: $port"
-    } else {
-        Write-Host "Service Name: $($service.DisplayName), Port information not found."
+    # Get TCP connections associated with the specified process ID
+    $tcpConnections = Get-NetTCPConnection | Where-Object { $_.OwningProcess -eq $targetProcessID }
+
+    # Extract the port from the TCP connections
+    $port = $tcpConnections.LocalPort | Select-Object -Unique
+
+    # Create a hashtable with the extracted information
+    $result = @{
+        'env'       = $env
+        'shortname' = $shortname
+        'port'      = $port
     }
+
+    # Add the hashtable to the results array
+    $results += New-Object PSObject -Property $result
 }
+
+# Display the results in a table
+$results | Format-Table -AutoSize
