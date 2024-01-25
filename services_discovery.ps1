@@ -10,36 +10,46 @@ foreach ($service in $services) {
     $serviceName = $service.DisplayName
     Write-Host "Processing service: $serviceName"
 
-    # Use Get-WmiObject to get the actual process ID (PID) for the service
-    $serviceInfo = Get-WmiObject Win32_Service | Where-Object { $_.DisplayName -eq $serviceName }
+    # Use Get-Service to get the actual process ID (PID) for the service
+    $serviceInfo = Get-Service -Name $serviceName
 
     if ($serviceInfo) {
-        $targetProcessID = $serviceInfo.ProcessId
-        Write-Host "Target process ID: $targetProcessID"
+        $targetProcessID = $serviceInfo.ServiceProcessId
 
-        # Get the hosting svchost.exe process for the service
-        $hostingSvchost = Get-Process -Id $targetProcessID | Select-Object -ExpandProperty Path
+        # Check if the process ID is not 0
+        if ($targetProcessID -ne 0) {
+            Write-Host "Target process ID: $targetProcessID"
 
-        Write-Host "Hosting svchost.exe process: $hostingSvchost"
+            # Get the ParentProcessId (PPID) to find the hosting svchost.exe process
+            $parentProcessId = (Get-CimInstance Win32_Process -Filter "ProcessId = $targetProcessID").ParentProcessId
 
-        # Get TCP connections associated with the specified process ID
-        $tcpConnections = Get-NetTCPConnection | Where-Object { $_.OwningProcess -eq $targetProcessID }
-        Write-Host "Found $($tcpConnections.Count) TCP connections for process ID: $targetProcessID"
+            # Get the hosting svchost.exe process for the service
+            $hostingSvchost = Get-Process -Id $parentProcessId | Where-Object { $_.ProcessName -eq 'svchost' } | Select-Object -ExpandProperty Path
 
-        # Extract the port from the TCP connections
-        $port = $tcpConnections.LocalPort | Select-Object -Unique
-        Write-Host "Extracted port: $port"
+            Write-Host "Hosting svchost.exe process: $hostingSvchost"
 
-        # Create a hashtable with the extracted information
-        $result = @{
-            'env'       = $serviceInfo.DisplayName.Split(".")[1]
-            'shortname' = ($serviceInfo.DisplayName.Split(".")[2..$($serviceInfo.DisplayName.Split(".").Count - 1)]) -join '.'
-            'port'      = $port
-            'svchost'   = $hostingSvchost
+            # Get TCP connections associated with the specified process ID
+            $tcpConnections = Get-NetTCPConnection | Where-Object { $_.OwningProcess -eq $targetProcessID }
+            Write-Host "Found $($tcpConnections.Count) TCP connections for process ID: $targetProcessID"
+
+            # Extract the port from the TCP connections
+            $port = $tcpConnections.LocalPort | Select-Object -Unique
+            Write-Host "Extracted port: $port"
+
+            # Create a hashtable with the extracted information
+            $result = @{
+                'env'       = $serviceName.Split(".")[1]
+                'shortname' = ($serviceName.Split(".")[2..$($serviceName.Split(".").Count - 1)]) -join '.'
+                'port'      = $port
+                'svchost'   = $hostingSvchost
+            }
+
+            # Add the hashtable to the results array
+            $results += New-Object PSObject -Property $result
         }
-
-        # Add the hashtable to the results array
-        $results += New-Object PSObject -Property $result
+        else {
+            Write-Host "Error: Target process ID is 0 for service $serviceName."
+        }
     }
     else {
         Write-Host "Unable to retrieve information for service $serviceName."
