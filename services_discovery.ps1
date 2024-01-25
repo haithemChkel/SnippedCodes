@@ -10,16 +10,11 @@ foreach ($service in $services) {
     $serviceName = $service.DisplayName
     Write-Host "Processing service: $serviceName"
 
-    $nameParts = $serviceName -split '\.'
-
-    # Ensure that there are at least three parts in the name
-    if ($nameParts.Count -ge 3) {
-        $env = $nameParts[1]
-        $shortname = ($nameParts[2..$($nameParts.Count - 1)]) -join '.'
-        Write-Host "Extracted env: $env, shortname: $shortname"
-
-        # Get the process ID (targetProcessID) for the service
-        $targetProcessID = Get-WmiObject Win32_Service | Where-Object { $_.DisplayName -eq $serviceName } | Select-Object -ExpandProperty ProcessId
+    # Use Get-WmiObject to get the actual process ID (PID) for the service
+    $serviceInfo = Get-WmiObject Win32_Service | Where-Object { $_.DisplayName -eq $serviceName }
+    
+    if ($serviceInfo) {
+        $targetProcessID = $serviceInfo.ProcessId
         Write-Host "Target process ID: $targetProcessID"
 
         # Get TCP connections associated with the specified process ID
@@ -32,8 +27,8 @@ foreach ($service in $services) {
 
         # Create a hashtable with the extracted information
         $result = @{
-            'env'       = $env
-            'shortname' = $shortname
+            'env'       = $serviceInfo.DisplayName.Split(".")[1]
+            'shortname' = ($serviceInfo.DisplayName.Split(".")[2..$($serviceInfo.DisplayName.Split(".").Count - 1)]) -join '.'
             'port'      = $port
         }
 
@@ -41,7 +36,7 @@ foreach ($service in $services) {
         $results += New-Object PSObject -Property $result
     }
     else {
-        Write-Host "Skipping service $serviceName. It does not have at least three parts in its name."
+        Write-Host "Unable to retrieve information for service $serviceName."
     }
 }
 
