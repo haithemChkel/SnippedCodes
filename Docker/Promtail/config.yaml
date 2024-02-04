@@ -1,0 +1,19 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: C:\temp\promtail-windows-amd64.exe\tmp\positions.yaml
+
+clients:
+  - url: http://localhost:3100/loki/api/v1/push
+
+scrape_configs:
+
+- job_name: custom_logs
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: custom_logs
+      __path__: C:\temp\promtail-windows-amd64.exe\logs\*.log
