@@ -1,0 +1,234 @@
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+
+//   For Demonstration, we will print number starting from 1 to 100.
+//   Except for a number is multiple of three, print “Fizz” instead of a number on the console 
+//   Except for if multiple of five then print “Buzz” on the console.
+//   Except for numbers which are multiple of three as well five, print “FizzBuzz” on the console
+
+// *********************************MAIN**************************
+public class Program
+{
+    public static void Main()
+    {
+
+        for (int i = 1; i <= 100; i++)
+        {
+            Console.WriteLine(i + " - " + FizzBuzz.Run(i));
+        }
+
+        TestRunner.Run(typeof(FizzBuzzTests));
+    }
+}
+
+
+// *********************************IMPLEMENTATION**************************
+class FizzBuzz
+{
+    public static string Run(int i)
+    {
+		if(i%5 == 0 && i%3 == 0){
+			return "FizzBuzz";
+		}
+		if(i%5 == 0){
+			return "Buzz";
+		}
+		if(i%3 == 0){
+			return "Fizz";
+		}		
+        return i.ToString();
+    }
+}
+
+// *********************************TESTS************************************
+class FizzBuzzTests
+{
+	public void TEST_NOT_multiple_three_or_five_When_1_should_return_1()
+    {
+		// ARRANGE
+		var input = 1;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "1");
+    }
+	
+	public void TEST_NOT_multiple_three_or_five_When_7_should_return_7()
+    {
+		// ARRANGE
+		var input = 7;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "7");
+    }
+	
+    public void TEST_multiple_three_When_3_should_return_Fizz()
+    {
+		// ARRANGE
+		var input = 3;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "Fizz");
+    }
+	
+	public void TEST_multiple_three_When_6_should_return_Fizz()
+    {
+		// ARRANGE
+		var input = 6;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "Fizz");
+    }
+	
+	public void TEST_multiple_three_When_9_should_return_Fizz()
+    {
+		// ARRANGE
+		var input = 9;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "Fizz");
+    }
+	
+	public void TEST_multiple_five_When_5_should_return_Buzz()
+    {
+		// ARRANGE
+		var input = 5;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "Buzz");
+    }
+	public void  TEST_multiple_fiveWhen_10_should_return_Buzz()
+    {
+		// ARRANGE
+		var input = 10;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "Buzz");
+    }
+	
+	public void  TEST_multiple_five_and_three_When_15_should_return_FizzBuzz()
+    {
+		// ARRANGE
+		var input = 15;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "FizzBuzz");
+    }
+	
+	public void  TEST_multiple_five_and_three_When_45_should_return_FizzBuzz()
+    {
+		// ARRANGE
+		var input = 45;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "FizzBuzz");
+    }
+	
+	public void  TEST_multiple_five_and_three_When_60_should_return_FizzBuzz()
+    {
+		// ARRANGE
+		var input = 60;
+		//ACT
+		 var actual = FizzBuzz.Run(input);
+		//ASSERT
+       
+        Assert.AreEqual(actual, "FizzBuzz");
+    }
+	
+}
+
+// ****************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Assert
+{
+    public static void AreEqual(string expected, string actual)
+    {
+        StackTrace stackTrace = new StackTrace();
+        Console.WriteLine((expected == actual ? "OK - " : "KO - ") + stackTrace.GetFrame(1).GetMethod().Name + string.Format(" -(expected : '{0}' - actual : '{1}')", expected, actual));
+    }
+}
+
+class TestRunner
+{
+    public static void Run(Type type)
+    {
+        Console.WriteLine("Run Tests : ");
+
+        ConstructorInfo constructor = type.GetConstructor(Type.EmptyTypes);
+        object classObject = constructor.Invoke(new object[] { });
+
+        MethodInfo[] testsMethods = type.GetMethods().Where(x => x.Name.StartsWith("TEST")).ToArray();
+        foreach (var testsMethod in testsMethods)
+        {
+            testsMethod.Invoke(classObject, new object[] { });
+        }
+    }
+}
