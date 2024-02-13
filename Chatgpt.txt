@@ -1,0 +1,50 @@
+
+
+To activate the Prometheus plugin for RabbitMQ using a Docker image and environment variables, you can use the RABBITMQ_PROMETHEUS_PLUGIN_ENABLED variable. Here's how you can do it:
+
+bash
+Copy code
+docker run -d --name rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -e RABBITMQ_PROMETHEUS_PLUGIN_ENABLED=true \
+  rabbitmq:latest
+This command runs a RabbitMQ container with the Prometheus plugin enabled. You can access RabbitMQ management interface at http://localhost:15672 and Prometheus metrics at http://localhost:15692/metrics. Adjust the port bindings and other options as needed for your environment.
+
+
+
+User
+I have a running container of rabbitmq on my server, I will need to delete and run the the same image, how to get actual starting parameters to keep the same behavior 
+
+ChatGPT
+To ensure that the new RabbitMQ container has the same behavior as the currently running one, you'll need to retrieve the current container's startup parameters. You can do this by inspecting the currently running RabbitMQ container. Here's how you can do it:
+
+Inspect the current RabbitMQ container:
+
+bash
+Copy code
+docker inspect <container_id_or_name>
+Replace <container_id_or_name> with the ID or name of your currently running RabbitMQ container.
+
+Find the startup parameters:
+Look for the Config section in the output of the docker inspect command. Within that section, you'll find the environment variables and other configurations used to start the container.
+
+Copy the relevant parameters:
+Take note of the environment variables and any other parameters that are used to start RabbitMQ.
+
+Once you have the startup parameters, you can delete the existing container and create a new one with the same parameters. Here's a general outline of the steps:
+
+Stop the existing container:
+
+bash
+Copy code
+docker stop <container_id_or_name>
+Delete the existing container:
+
+bash
+Copy code
+docker rm <container_id_or_name>
+Run a new container with the same parameters:
+Use the docker run command with the appropriate parameters, including environment variables, ports, volumes, etc., based on the information you gathered from inspecting the existing container.
+
+By following these steps, you can recreate a RabbitMQ container with the same behavior as the one you had before.
