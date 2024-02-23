@@ -33,6 +33,6 @@ docker rm prometheus || true
 docker rm grafana || true
 
 docker run -d --network="$network_name" -v $prom_volume_name:/prometheus --name=prometheus prom/prometheus
-docker run -d -p 3001:3000 --network="$network_name" -v $grafana_volume_name:/var/lib/grafana --name=grafana grafana/grafana-enterprise
+docker run -d -p 3001:3000 --network="$network_name" -v $grafana_volume_name:/var/lib/grafana --name=grafana grafana/grafana-oss
 
 docker ps
