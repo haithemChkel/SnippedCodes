@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  opentelemetry-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "55681:55681" # OTLP HTTP receiver
+    volumes:
+      - ./otel-config.yml:/etc/otel-collector-config.yml:ro
+    command:
+      --config=/etc/otel-collector-config.yml
+    restart: always
+
+  jaeger:
+    image: jaegertracing/all-in-one:2.2
+    container_name: jaeger
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "14250:14250"   # gRPC (for internal usage)
+    environment:
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=false
+      - BADGER_DIRECTORY_KEY=/badger/data
+      - BADGER_DIRECTORY_VALUE=/badger/data
+    volumes:
+      - jaeger-data:/badger/data
+    restart: always
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    ports:
+      - "3200:3200"   # Tempo API port
+    volumes:
+      - ./tempo-config.yml:/etc/tempo-config.yml:ro
+      - tempo-data:/tempo
+    command: -config.file=/etc/tempo-config.yml
+    restart: always
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"   # Loki API port
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+      - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+    restart: always
+
+volumes:
+  jaeger-data:
+    driver: local
+  tempo-data:
+    driver: local
+  loki-data:
+    driver: local
+
+
+------------
+
+tempo
+
+
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+        http:
+
+storage:
+  trace:
+    backend: local
+    path: /tempo/traces
+
+
+-------++++
+loki
+
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  path: /loki
+  storage:
+    filesystem:
+      directory: /loki
+  retention:
+    size: 10GB
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+ruler:
+  storage:
+    type: local
+  rule_path: /loki/rules
+  alertmanager_url: ""
+
