@@ -1,0 +1,38 @@
+**Sujet de Stage : Développement d'un Outil de Gestion de Configuration Multi-Environnements**
+
+**Contexte :**  
+Notre équipe de développement logiciel souhaite intégrer un stagiaire pour concevoir et implémenter un outil de gestion de configuration permettant de comparer et synchroniser les configurations entre différents environnements (ex : développement, recette, production). Cet outil devra également inclure des fonctionnalités de support pour intervenir sur les environnements de production.
+
+**Objectifs :**  
+1. **Comparaison des Configurations :**  
+   - Développer une solution permettant de comparer les configurations entre deux environnements (ex : fichiers de configuration, paramètres de base de données, etc.).
+   - Visualiser les différences de manière claire et intuitive.
+
+2. **Synchronisation des Configurations :**  
+   - Permettre l'application des configurations d'un environnement à un autre (dans les deux sens).
+   - Assurer la cohérence et la sécurité des opérations de synchronisation.
+
+3. **Outils de Support pour la Production :**  
+   - Intégrer des fonctionnalités pour intervenir sur les environnements de production (ex : vérification des logs, gestion des erreurs, etc.).
+   - Faciliter les interventions techniques tout en minimisant les risques.
+
+**Technologies :**  
+- **Frontend :** Blazor (Dotnet)  
+- **Backend :** Dotnet 8, REST API, GraphQL  
+- **Base de données :** PostgreSQL  
+- **Messagerie :** RabbitMQ  
+- **Cache :** Redis  
+
+**Profil du Candidat :**  
+- Étudiant en informatique ou équivalent.  
+- Connaissances en développement web (Dotnet, Blazor).  
+- Expérience ou intérêt pour les bases de données (PostgreSQL) et les systèmes de messagerie (RabbitMQ).  
+- Capacité à travailler en équipe et à proposer des solutions innovantes.  
+
+**Durée :**  
+- 4 à 6 mois (à définir selon les disponibilités).  
+
+**Lieu :**  
+- [Préciser le lieu ou indiquer si télétravail possible]  
+
+Ce stage offre une opportunité de travailler sur des technologies modernes et de contribuer à un outil critique pour la gestion des environnements dans une application logicielle.
